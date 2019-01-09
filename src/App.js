@@ -3,7 +3,8 @@ import './App.css';
 import Player from './components/players'
 import cr7 from '../src/img/ronaldo.jpg'
 import lm10 from '../src/img/lm10.jpg'
-import pogba from '../src/img/paul.jpg'
+import pogba from '../src/img/paul.jpg';
+import axios from 'axios';
 
 const playerData = [
   {
@@ -11,7 +12,7 @@ const playerData = [
     goals: 30,
     votes: 0,
     id: 1,
-    image: cr7 
+    image: cr7
   },
   {
     name: 'Messi',
@@ -19,63 +20,77 @@ const playerData = [
     votes: 0,
     id: 2,
     image: lm10
-    },
+  },
   {
     name: 'Pogba',
     goals: 26,
     votes: 0,
     id: 3,
     image: pogba
-    }
+  }
 ];
 
 class App extends Component {
 
   state = {
     playerDetails: [],
-     
+    voteDetails: {}
   }
 
-  componentDidMount(){
-    this.setState({playerDetails: playerData})
+  constructor() {
+    super();
+    this.drone = new window.Scaledrone('vIh5lXOnewFxNIeC');
+    this.drone.on('open', error => {
+      if (error) {
+        return console.error("Error");
+      }
+    })
+
+    const room = this.drone.subscribe('live-votes');
+    room.on('data', (data) => {
+      this.state.playerDetails.map(player => {
+        if (player.name === data) {
+          return Object.assign({}, player, {
+            votes: player.votes += 5
+          });
+        } else {
+          return player;
+        }
+      });
+
+      this.setState({
+        playerDetails: this.state.playerDetails
+      });
+    });
+  }
+
+  componentDidMount() {
+    this.setState({ playerDetails: playerData })
   }
 
   handleEvent = playerId => {
-    console.log(playerId)
+    const data = { playerId }
 
-    // make Scaledrone request.
-
-
-
-
-    this.state.playerDetails.map(player => {
-      if (player.name === playerId) {
-        return Object.assign({}, player, {
-          votes: player.votes ++ 
-        });
-      } else {
-        return player;
-      }
-    });
-    console.log(this.state.playerDetails)
-    //console.log(updatedList)
-    this.setState({
-      playerDetails: this.state.playerDetails
-    });
+    axios.post('http://localhost:4000/vote', data).then(data => {
+      this.drone.publish({
+        room: "live-votes",
+        message: data.data.playerId
+      });
+    })
   }
-    
+
   render() {
-    return playerData.map(player => 
-      
-    <Player 
-    key={player.id} 
-    name={player.name} 
-    goals={player.goals} 
-    image={player.image}
-    votes ={player.votes}
-    id = {player.id}
-    onVoteCasted = {this.handleEvent} 
-    />);
+    return playerData.map(player =>
+
+      <Player
+        key={player.id}
+        name={player.name}
+        goals={player.goals}
+        image={player.image}
+        votes={player.votes}
+        id={player.id}
+        onVoteCasted={this.handleEvent}
+      />);
   }
 }
 
