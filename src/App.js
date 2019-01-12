@@ -33,16 +33,15 @@ const playerData = [
 class App extends Component {
 
   state = {
-    playerDetails: [],
-    voteDetails: {}
+    playerDetails: []
   }
 
   constructor() {
     super();
-    this.drone = new window.Scaledrone('vIh5lXOnewFxNIeC');
+    this.drone = new window.Scaledrone('AfdKeFBcrOpY48AO');
     this.drone.on('open', error => {
       if (error) {
-        return console.error("Error");
+        return console.log(error);
       }
     })
 
@@ -67,17 +66,40 @@ class App extends Component {
   componentDidMount() {
     this.setState({ playerDetails: playerData })
   }
-
-  handleEvent = playerId => {
-    const data = { playerId }
-
-    axios.post('http://localhost:4000/vote', data).then(data => {
-      this.drone.publish({
-        room: "live-votes",
-        message: data.data.playerId
-      });
+  handleEvent  = (id) => {
+    const vote = {
+      player_id : id
+    }
+ 
+    axios.post('http://localhost:4000/vote', {vote}).then((response) => {
+      //console.log(response);
     })
   }
+  // handleEvent = playerId => {
+   
+  //   const data = {playerId}
+  //   axios.post('http://localhost:4000/vote', data ).then(response => {
+     
+  //   this.drone.publish({
+  //       room: "live-votes",
+  //       message: response.data.playerId
+  //     });
+      
+  //   })
+  // }
+//   auth(){
+//     //const clientID = drone.clientID
+//     axios.post('auth/' + this.drone.clientId)
+//     .then(response => response.text())
+//     .then(jwt => this.drone.authenticate(jwt));
+
+//     this.drone.on('authenticate', error => {
+//       if (error) {
+//         return console.error(error);
+//       }
+//       console.log('Authenticated');
+//   });
+// }
 
   render() {
     return playerData.map(player =>
